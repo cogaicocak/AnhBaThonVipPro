@@ -76,9 +76,57 @@ local function UpdateButton(button, enabled)
     button.BackgroundColor3 = enabled and Color3.fromRGB(75, 255, 75) or Color3.fromRGB(255, 75, 75)
 end
 
+-- Add a table to track threads
+local TapThreads = {}
+
+-- Function to start auto tap
+local function startAutoTap()
+    -- Clear any existing threads
+    for _, thread in pairs(TapThreads) do
+        task.cancel(thread)
+    end
+    TapThreads = {}
+    
+    -- Create new threads
+    for i = 1, 470000 do
+        local thread = task.spawn(function()
+            while Config.AutoTap do
+                local RS = game:GetService("ReplicatedStorage")
+                RS.Tap:InvokeServer(true)
+                task.wait()
+            end
+        end)
+        table.insert(TapThreads, thread)
+    end
+    
+    -- Burst thread
+    local burstThread = task.spawn(function()
+        while Config.AutoTap do
+            for i = 1, 500000 do
+                if not Config.AutoTap then break end
+                task.spawn(function()
+                    game:GetService("ReplicatedStorage").Tap:InvokeServer(true)
+                end)
+            end
+            task.wait()
+        end
+    end)
+    table.insert(TapThreads, burstThread)
+end
+
 AutoTapButton.MouseButton1Click:Connect(function()
     Config.AutoTap = not Config.AutoTap
     UpdateButton(AutoTapButton, Config.AutoTap)
+    
+    if Config.AutoTap then
+        startAutoTap()
+    else
+        -- Stop all tap threads
+        for _, thread in pairs(TapThreads) do
+            task.cancel(thread)
+        end
+        TapThreads = {}
+    end
 end)
 
 AutoRebirthButton.MouseButton1Click:Connect(function()
@@ -126,39 +174,6 @@ end)
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         update(input)
-    end
-end)
-
--- Optimized tapping function
-local function performTap()
-    local RS = game:GetService("ReplicatedStorage")
-    -- Only normal tap
-    RS.Tap:InvokeServer(true)
-end
-
--- Create multiple tap threads for maximum speed
-for i = 1, 470 do  -- Create 10 parallel tap threads
-    task.spawn(function()
-        while true do
-            if Config.AutoTap then
-                performTap()
-            end
-            task.wait()  -- Minimal possible delay
-        end
-    end)
-end
-
--- Even faster tapping in another thread using different timing
-task.spawn(function()
-    while true do
-        if Config.AutoTap then
-            for i = 1, 500 do  -- Burst of 50 taps
-                if Config.AutoTap then
-                    task.spawn(performTap)
-                end
-            end
-        end
-        task.wait()
     end
 end)
 
