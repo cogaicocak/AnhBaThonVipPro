@@ -5,6 +5,8 @@ local Config = {
     AutoUpgrade = false
 }
 
+local AllThreads = {} -- Table to track ALL threads
+
 -- Create the UI
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
@@ -76,42 +78,44 @@ local function UpdateButton(button, enabled)
     button.BackgroundColor3 = enabled and Color3.fromRGB(75, 255, 75) or Color3.fromRGB(255, 75, 75)
 end
 
--- Add a table to track threads
-local TapThreads = {}
-
 -- Function to start auto tap
 local function startAutoTap()
     -- Clear any existing threads
-    for _, thread in pairs(TapThreads) do
-        task.cancel(thread)
+    for _, thread in pairs(AllThreads) do
+        if type(thread) == "thread" then
+            task.cancel(thread)
+        end
     end
-    TapThreads = {}
+    AllThreads = {}
     
     -- Create new threads
-    for i = 1, 470000 do
+    for i = 1, 47000000 do
         local thread = task.spawn(function()
             while Config.AutoTap do
+                if not Config.AutoTap then break end
                 local RS = game:GetService("ReplicatedStorage")
                 RS.Tap:InvokeServer(true)
                 task.wait()
             end
         end)
-        table.insert(TapThreads, thread)
+        table.insert(AllThreads, thread)
     end
     
     -- Burst thread
     local burstThread = task.spawn(function()
         while Config.AutoTap do
-            for i = 1, 500000 do
+            if not Config.AutoTap then break end
+            for i = 1, 50000000 do
                 if not Config.AutoTap then break end
                 task.spawn(function()
+                    if not Config.AutoTap then return end
                     game:GetService("ReplicatedStorage").Tap:InvokeServer(true)
                 end)
             end
             task.wait()
         end
     end)
-    table.insert(TapThreads, burstThread)
+    table.insert(AllThreads, burstThread)
 end
 
 AutoTapButton.MouseButton1Click:Connect(function()
@@ -121,11 +125,16 @@ AutoTapButton.MouseButton1Click:Connect(function()
     if Config.AutoTap then
         startAutoTap()
     else
-        -- Stop all tap threads
-        for _, thread in pairs(TapThreads) do
-            task.cancel(thread)
+        -- Stop all threads
+        for _, thread in pairs(AllThreads) do
+            if type(thread) == "thread" then
+                task.cancel(thread)
+            end
         end
-        TapThreads = {}
+        AllThreads = {}
+        -- Force garbage collection
+        task.wait()
+        game:GetService("Debris"):AddItem(Instance.new("Folder"), 0)
     end
 end)
 
@@ -210,4 +219,23 @@ task.spawn(function()
         end
         task.wait(0.2)
     end
+end)
+
+-- Add cleanup on script destruction
+game:GetService("CoreGui").TappingSimulatorGUI.Destroying:Connect(function()
+    Config.AutoTap = false
+    Config.AutoRebirth = false
+    Config.AutoUpgrade = false
+    
+    -- Cancel all threads
+    for _, thread in pairs(AllThreads) do
+        if type(thread) == "thread" then
+            task.cancel(thread)
+        end
+    end
+    AllThreads = {}
+    
+    -- Force cleanup
+    task.wait()
+    game:GetService("Debris"):AddItem(Instance.new("Folder"), 0)
 end)
