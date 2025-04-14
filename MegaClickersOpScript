@@ -49,7 +49,7 @@ UICorner.Parent = MainFrame
 Title.Name = "Title"
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.BackgroundTransparency = 1
-Title.Text = "Tapping Simulator"
+Title.Text = "Mega Clickers Script"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 16
@@ -131,7 +131,7 @@ end)
 
 -- Main loop
 spawn(function()
-    while wait() do
+    while task.wait() do
         if Config.AutoTap then
             local AutoClickArgs = {
                 [1] = true
