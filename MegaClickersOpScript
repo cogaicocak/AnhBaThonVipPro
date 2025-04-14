@@ -105,7 +105,7 @@ local function startAutoTap()
     local burstThread = task.spawn(function()
         while Config.AutoTap do
             if not Config.AutoTap then break end
-            for i = 1, 50000000 do
+            for i = 1, 500000 do
                 if not Config.AutoTap then break end
                 task.spawn(function()
                     if not Config.AutoTap then return end
