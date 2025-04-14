@@ -132,15 +132,12 @@ end)
 -- Optimized tapping function
 local function performTap()
     local RS = game:GetService("ReplicatedStorage")
-    
-    -- All three types of taps in one function
+    -- Only normal tap
     RS.Tap:InvokeServer(true)
-    RS.Tap:InvokeServer("super")
-    RS.Tap:InvokeServer("auto")
 end
 
 -- Create multiple tap threads for maximum speed
-for i = 1, 70 do  -- Create 10 parallel tap threads
+for i = 1, 470 do  -- Create 10 parallel tap threads
     task.spawn(function()
         while true do
             if Config.AutoTap then
@@ -155,7 +152,7 @@ end
 task.spawn(function()
     while true do
         if Config.AutoTap then
-            for i = 1, 100 do  -- Burst of 50 taps
+            for i = 1, 500 do  -- Burst of 50 taps
                 if Config.AutoTap then
                     task.spawn(performTap)
                 end
